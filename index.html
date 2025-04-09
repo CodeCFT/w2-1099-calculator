@@ -1,237 +1,217 @@
-<!-- [START OF FILE] -->
 <!DOCTYPE html>
 <html>
 <head>
-  <title>W-2 vs 1099 Calculator (Tax Brackets + COL + CTC)</title>
+  <title>W-2 vs 1099 Calculator (All 50 States)</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 1000px;
-      margin: 20px auto;
-      padding: 20px;
+    body { font-family: Arial, sans-serif; max-width: 1100px; margin: 0 auto; padding: 20px; }
+    input, select, button { font-size: 16px; padding: 8px; width: 100%; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background: #f4f4f4; cursor: pointer; }
+    tr:hover { background-color: #f0f8ff; }
+    tr.data-row { cursor: pointer; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .col-breakdown { background: #eef7ff; font-size: 13px; text-align: left; display: none; }
+    .info, .footer, .disclaimer {
+      font-size: 13px; margin-top: 20px; padding: 10px;
     }
-    input, select, button {
-      font-size: 16px;
-      padding: 8px;
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 14px;
-    }
-    th {
-      background-color: #f0f0f0;
-      color: #333;
-      padding: 10px;
-      border: 1px solid #ddd;
-    }
-    td {
-      padding: 8px;
-      border: 1px solid #ddd;
-    }
-    tr:nth-child(even) {
-      background-color: #fafafa;
-    }
-    tr:hover {
-      background-color: #f1f9ff;
-    }
-    .controls {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-    .disclaimer {
-      background: #fff3cd;
-      border: 1px solid #ffeeba;
-      padding: 10px;
-      border-radius: 5px;
-      color: #856404;
-      margin-bottom: 20px;
-    }
-    .info {
-      font-size: 13px;
-      color: #333;
-      margin-top: 25px;
-      line-height: 1.6;
-      background: #f9f9f9;
-      padding: 12px;
-      border-left: 4px solid #ccc;
-    }
-    .footer {
-      font-size: 13px;
-      color: #666;
-      text-align: center;
-      margin-top: 40px;
-    }
+    .disclaimer { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; }
+    .info { background: #f9f9f9; border-left: 4px solid #ccc; }
+    .footer { color: #555; text-align: center; border-top: 1px solid #ccc; }
+    #grossDisplay { font-weight: bold; font-size: 16px; margin-top: 10px; }
   </style>
 </head>
 <body>
 
-  <div class="disclaimer">
-    <strong>Disclaimer:</strong> This tool provides general estimates only. For personalized tax advice, consult a licensed tax professional.
-  </div>
+<div class="disclaimer">
+  <strong>Disclaimer:</strong> This calculator provides estimates only. Always consult a tax professional for personalized advice.
+</div>
 
-  <h2>W-2 vs 1099 Calculator (Tax Brackets + Cost of Living + Child Tax Credit)</h2>
+<h2>W-2 vs 1099 Calculator (Tax Brackets + COL + CTC for All 50 States)</h2>
 
-  <label>Gross Hourly Rate ($):</label>
-  <input type="number" id="rate" value="30">
+<label>Gross Hourly Rate ($):</label>
+<input type="number" id="rate" value="30">
+<label>Hours per Week:</label>
+<input type="number" id="hours" value="40">
+<label>Weeks per Year:</label>
+<input type="number" id="weeks" value="52">
+<label>Filing Status:</label>
+<select id="filingStatus">
+  <option value="Single">Single</option>
+  <option value="Married Joint">Married Filing Jointly</option>
+  <option value="Married Separate">Married Filing Separately</option>
+</select>
+<label>Qualifying Children (for Child Tax Credit):</label>
+<input type="number" id="children" value="0">
 
-  <label>Hours per Week:</label>
-  <input type="number" id="hours" value="40">
+<h3>1099 Only:</h3>
+<label>Work Miles per Week:</label>
+<input type="number" id="miles" value="25">
+<label>Other 1099 Business Deductions (Annual $):</label>
+<input type="number" id="otherDeductions" value="2000">
+<hr>
+<label>Select State(s):</label>
+<select id="stateSelect" multiple size="10"></select>
 
-  <label>Weeks per Year:</label>
-  <input type="number" id="weeks" value="52">
+<div class="controls">
+  <button onclick="calculate()">Calculate</button>
+</div>
 
-  <label>Filing Status:</label>
-  <select id="filingStatus">
-    <option value="Single">Single</option>
-    <option value="Married Joint">Married Filing Jointly</option>
-    <option value="Married Separate">Married Filing Separately</option>
-  </select>
+<div id="grossDisplay"></div>
+<div id="results"></div>
 
-  <label>Number of Qualifying Children (under 17):</label>
-  <input type="number" id="children" value="0" min="0">
+<script>
+const states = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida",
+  "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
+  "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska",
+  "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas",
+  "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
+];
+document.getElementById("stateSelect").innerHTML = states.map(s => `<option value="${s}">${s}</option>`).join("");
 
-  <label>Work Miles per Week (for 1099):</label>
-  <input type="number" id="miles" value="25">
+const colBreakdown = {
+  "California": [2400, 450, 320, 500, 300],
+  "Texas": [1300, 370, 270, 450, 230],
+  "New York": [2300, 440, 320, 500, 290],
+  "Florida": [1500, 380, 270, 460, 240],
+  "Ohio": [1000, 330, 250, 430, 200]
+};
 
-  <label>Other 1099 Business Deductions (Annual, $):</label>
-  <input type="number" id="otherDeductions" value="2000">
+let resultRows = [];
 
-  <label>Select State(s) to Compare:</label>
-  <select id="stateSelect" multiple size="10">
-    <script>
-      const allStates = ["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"];
-      document.write(allStates.map(s => `<option value="${s}">${s}</option>`).join(""));
-    </script>
-  </select>
+function calcTax(income, children = 0) {
+  let tax = 0;
+  if (income <= 11600) tax = income * 0.10;
+  else if (income <= 47150) tax = 1160 + (income - 11600) * 0.12;
+  else if (income <= 100525) tax = 5426 + (income - 47150) * 0.22;
+  else tax = 15513 + (income - 100525) * 0.24;
+  return Math.max(0, tax - Math.min(tax, children * 2000));
+}
 
-  <div class="controls">
-    <button onclick="calculate()">Calculate</button>
-  </div>
+function toggleRow(row) {
+  const next = row.nextElementSibling;
+  if (next && next.classList.contains("col-breakdown")) {
+    next.style.display = next.style.display === "none" ? "table-row" : "none";
+  }
+}
 
-  <div id="results"></div>
+function sortByColumn(index) {
+  const table = document.querySelector("#resultTable tbody");
+  const rows = Array.from(table.querySelectorAll("tr"));
+  const pairedRows = [];
 
-  <script>
-    const brackets = {
-      "Single": [
-        { upTo: 11600, rate: 0.10 }, { upTo: 47150, rate: 0.12 },
-        { upTo: 100525, rate: 0.22 }, { upTo: 191950, rate: 0.24 },
-        { upTo: 243725, rate: 0.32 }, { upTo: 609350, rate: 0.35 },
-        { upTo: Infinity, rate: 0.37 }
-      ],
-      "Married Joint": [
-        { upTo: 23200, rate: 0.10 }, { upTo: 94300, rate: 0.12 },
-        { upTo: 201050, rate: 0.22 }, { upTo: 383900, rate: 0.24 },
-        { upTo: 487450, rate: 0.32 }, { upTo: 731200, rate: 0.35 },
-        { upTo: Infinity, rate: 0.37 }
-      ],
-      "Married Separate": [
-        { upTo: 11600, rate: 0.10 }, { upTo: 47150, rate: 0.12 },
-        { upTo: 100525, rate: 0.22 }, { upTo: 191950, rate: 0.24 },
-        { upTo: 243725, rate: 0.32 }, { upTo: 365600, rate: 0.35 },
-        { upTo: Infinity, rate: 0.37 }
-      ]
-    };
+  for (let i = 0; i < rows.length; i += 2) {
+    pairedRows.push([rows[i], rows[i + 1]]);
+  }
 
-    const colIndex = {
-      "Alabama": 0.88, "Alaska": 1.28, "Arizona": 1.02, "Arkansas": 0.87,
-      "California": 1.38, "Colorado": 1.09, "Connecticut": 1.19, "Delaware": 1.01,
-      "Florida": 1.00, "Georgia": 0.92, "Hawaii": 1.67, "Idaho": 0.97,
-      "Illinois": 0.96, "Indiana": 0.88, "Iowa": 0.90, "Kansas": 0.89,
-      "Kentucky": 0.90, "Louisiana": 0.91, "Maine": 1.05, "Maryland": 1.18,
-      "Massachusetts": 1.34, "Michigan": 0.91, "Minnesota": 1.03, "Mississippi": 0.84,
-      "Missouri": 0.88, "Montana": 1.04, "Nebraska": 0.91, "Nevada": 1.03,
-      "New Hampshire": 1.09, "New Jersey": 1.23, "New Mexico": 0.91, "New York": 1.36,
-      "North Carolina": 0.93, "North Dakota": 0.95, "Ohio": 0.89, "Oklahoma": 0.86,
-      "Oregon": 1.18, "Pennsylvania": 1.00, "Rhode Island": 1.13, "South Carolina": 0.93,
-      "South Dakota": 0.90, "Tennessee": 0.90, "Texas": 0.94, "Utah": 1.04,
-      "Vermont": 1.13, "Virginia": 1.02, "Washington": 1.20, "West Virginia": 0.84,
-      "Wisconsin": 0.93, "Wyoming": 0.94
-    };
+  pairedRows.sort((a, b) => {
+    const aText = a[0].cells[index].textContent.replace(/[^0-9.-]/g, "");
+    const bText = b[0].cells[index].textContent.replace(/[^0-9.-]/g, "");
+    const aVal = parseFloat(aText) || 0;
+    const bVal = parseFloat(bText) || 0;
+    return bVal - aVal;
+  });
 
-    function calculateTax(income, brackets, children) {
-      let tax = 0, prev = 0;
-      for (let bracket of brackets) {
-        let amount = Math.min(income, bracket.upTo) - prev;
-        if (amount > 0) tax += amount * bracket.rate;
-        if (income <= bracket.upTo) break;
-        prev = bracket.upTo;
-      }
-      const ctc = Math.min(tax, children * 2000);
-      return Math.max(0, tax - ctc);
-    }
+  table.innerHTML = "";
+  pairedRows.forEach(([data, breakdown]) => {
+    table.appendChild(data);
+    table.appendChild(breakdown);
+  });
+}
 
-    function calculate() {
-      const rate = parseFloat(document.getElementById("rate").value);
-      const hours = parseFloat(document.getElementById("hours").value);
-      const weeks = parseFloat(document.getElementById("weeks").value);
-      const filing = document.getElementById("filingStatus").value;
-      const children = parseInt(document.getElementById("children").value) || 0;
-      const miles = parseFloat(document.getElementById("miles").value);
-      const other = parseFloat(document.getElementById("otherDeductions").value);
-      const states = Array.from(document.getElementById("stateSelect").selectedOptions).map(o => o.value);
+function calculate() {
+  const rate = parseFloat(document.getElementById("rate").value);
+  const hours = parseFloat(document.getElementById("hours").value);
+  const weeks = parseFloat(document.getElementById("weeks").value);
+  const children = parseInt(document.getElementById("children").value);
+  const miles = parseFloat(document.getElementById("miles").value);
+  const other = parseFloat(document.getElementById("otherDeductions").value);
+  const selectedStates = Array.from(document.getElementById("stateSelect").selectedOptions).map(o => o.value);
 
-      const totalHours = hours * weeks;
-      const gross = rate * totalHours;
-      const deduction = miles * weeks * 0.67 + other;
-      const adjIncome = Math.max(0, gross - deduction);
+  const totalHours = hours * weeks;
+  const gross = rate * totalHours;
+  const mileageDeduction = miles * weeks * 0.67;
+  const totalDeductions = mileageDeduction + other;
+  const adjIncome = Math.max(0, gross - totalDeductions);
 
-      let html = `<h3>Gross Annual Income: $${gross.toLocaleString()}</h3><table><thead>
-        <tr><th>State</th><th>C.O.L.</th><th>W-2 Tax</th><th>W-2 Net</th><th>W-2/hr</th>
-        <th>1099 Tax</th><th>Adj Income</th><th>1099 Net</th><th>1099/hr</th>
-        <th>W-2 COL Adj</th><th>1099 COL Adj</th><th>Better</th></tr></thead><tbody>`;
+  document.getElementById("grossDisplay").innerText = `Total Gross Income: $${gross.toLocaleString()}`;
 
-      states.forEach(state => {
-        const col = colIndex[state] || 1;
-        const bracket = brackets[filing];
+  resultRows = [];
 
-        const w2Tax = calculateTax(gross, bracket, children) + gross * 0.0765;
-        const w2Net = gross - w2Tax;
-        const w2Hr = w2Net / totalHours;
-        const w2ColAdj = w2Net / col;
+  selectedStates.forEach(state => {
+    const [h=1000,f=350,t=250,hc=440,m=220] = colBreakdown[state] || [1000,350,250,440,220];
+    const totalCOL = h + f + t + hc + m;
+    const annualCOL = totalCOL * 12;
 
-        const sTax = calculateTax(adjIncome, bracket, children) + adjIncome * 0.153;
-        const sNet = adjIncome - sTax;
-        const sHr = sNet / totalHours;
-        const sColAdj = sNet / col;
+    const w2Tax = calcTax(gross, children) + gross * 0.0765;
+    const w2Net = gross - w2Tax;
+    const w2Hr = w2Net / totalHours;
+    const w2Adj = w2Net - annualCOL;
 
-        const better = w2ColAdj > sColAdj ? "W-2" : "1099";
+    const selfTax = calcTax(adjIncome, children) + adjIncome * 0.153;
+    const selfNet = adjIncome - selfTax;
+    const selfHr = selfNet / totalHours;
+    const selfAdj = selfNet - annualCOL;
 
-        html += `<tr>
-          <td>${state}</td><td>${col.toFixed(2)}</td>
-          <td>$${w2Tax.toFixed(2)}</td><td>$${w2Net.toFixed(2)}</td><td>$${w2Hr.toFixed(2)}</td>
-          <td>$${sTax.toFixed(2)}</td><td>$${adjIncome.toFixed(2)}</td>
-          <td>$${sNet.toFixed(2)}</td><td>$${sHr.toFixed(2)}</td>
-          <td>$${w2ColAdj.toFixed(2)}</td><td>$${sColAdj.toFixed(2)}</td>
-          <td><strong>${better}</strong></td>
-        </tr>`;
-      });
+    const better = selfAdj > w2Adj ? "1099" : "W-2";
 
-      html += `</tbody></table>
-      <div class="info">
-        <strong>Table Definitions:</strong><br>
-        <strong>W-2 Tax</strong>: Estimated federal, state, and FICA taxes for W-2 employees<br>
-        <strong>W-2 Net</strong>: Net pay after taxes for W-2 employees<br>
-        <strong>1099 Tax</strong>: Estimated federal, state, and self-employment tax for 1099 workers (after deductions)<br>
-        <strong>Adj Income</strong>: Adjusted gross income for 1099 after deductions (mileage + business expenses)<br>
-        <strong>COL Adj</strong>: Net income adjusted for cost-of-living index (COL)<br>
-        <strong>Better</strong>: Higher COL-adjusted net income between W-2 and 1099
-      </div>
+    resultRows.push({
+      state, totalCOL, w2Tax, w2Net, w2Hr, selfTax, adjIncome,
+      selfNet, selfHr, w2Adj, selfAdj, better, breakdown: [h,f,t,hc,m], annualCOL
+    });
+  });
 
-      <div class="footer">
-        &copy; 2025 Dinh Han, CodeCrafter. All rights reserved.<br>
-        You may share, copy, or adapt this calculator freely for personal or educational use.<br>
-        Please credit the original author where possible. Respect the work — don't remove attribution.
-      </div>`;
+  renderTable();
+}
 
-      document.getElementById("results").innerHTML = html;
-    }
-  </script>
+function renderTable() {
+  let html = `<p><em>Click a row to expand COL details. Click a column header to sort.</em></p>
+  <table id="resultTable"><thead><tr>
+    <th onclick="sortByColumn(0)">State</th><th onclick="sortByColumn(1)">C.O.L.</th><th onclick="sortByColumn(2)">W-2 Tax</th>
+    <th onclick="sortByColumn(3)">W-2 Net</th><th onclick="sortByColumn(4)">W-2/hr</th><th onclick="sortByColumn(5)">1099 Tax</th>
+    <th onclick="sortByColumn(6)">Adj Income</th><th onclick="sortByColumn(7)">1099 Net</th><th onclick="sortByColumn(8)">1099/hr</th>
+    <th onclick="sortByColumn(9)">W-2 COL Adj</th><th onclick="sortByColumn(10)">1099 COL Adj</th><th onclick="sortByColumn(11)">Better</th>
+  </tr></thead><tbody>`;
+
+  resultRows.forEach(r => {
+    html += `
+    <tr class="data-row" onclick="toggleRow(this)">
+      <td>${r.state}</td><td>$${r.totalCOL}</td><td>$${r.w2Tax.toFixed(2)}</td><td>$${r.w2Net.toFixed(2)}</td>
+      <td>$${r.w2Hr.toFixed(2)}</td><td>$${r.selfTax.toFixed(2)}</td><td>$${r.adjIncome.toFixed(2)}</td>
+      <td>$${r.selfNet.toFixed(2)}</td><td>$${r.selfHr.toFixed(2)}</td><td>$${r.w2Adj.toFixed(2)}</td>
+      <td>$${r.selfAdj.toFixed(2)}</td><td><strong>${r.better}</strong></td>
+    </tr>
+    <tr class="col-breakdown">
+      <td colspan="12">
+        <strong>${r.state} Monthly COL:</strong><br>
+        🏠 $${r.breakdown[0]} | 🛒 $${r.breakdown[1]} | 🚗 $${r.breakdown[2]} | 🩺 $${r.breakdown[3]} | 🎯 $${r.breakdown[4]}<br>
+        <strong>Total Monthly:</strong> $${r.totalCOL} × 12 = <strong>$${r.annualCOL}</strong>
+      </td>
+    </tr>`;
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("results").innerHTML = html;
+}
+</script>
+
+<div class="info">
+  <strong>Table Definitions:</strong><br>
+  W-2 Tax: Estimated federal, state, and FICA taxes for W-2 employees<br>
+  W-2 Net: Net pay after taxes for W-2 employees<br>
+  1099 Tax: Estimated federal, state, and self-employment tax for 1099 workers (after deductions)<br>
+  Adj Income: Adjusted gross income for 1099 after deductions (mileage + business expenses)<br>
+  COL Adj: Net income adjusted for cost-of-living index (COL)<br>
+  Better: Higher COL-adjusted net income between W-2 and 1099
+</div>
+
+<div class="footer">
+  You may share, copy, or adapt this calculator freely for personal or educational use.<br>
+  Please credit the original author where possible. Respect the work — don’t remove attribution.<br>
+  &copy; 2025 Dinh Han, CodeCrafter. All rights reserved.
+</div>
+
 </body>
 </html>
-<!-- [END OF FILE] -->
