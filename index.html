@@ -27,7 +27,7 @@
   <strong>Disclaimer:</strong> This calculator provides estimates only. Always consult a tax professional for personalized advice.
 </div>
 
-<h2>W-2 vs 1099 Calculator (Tax Brackets + COL + CTC for All 50 States)</h2>
+<h2>W-2 vs 1099 Calculator (Tax Brackets + COL + Child Tax Credit)</h2>
 
 <label>Gross Hourly Rate ($):</label>
 <input type="number" id="rate" value="30">
@@ -41,7 +41,7 @@
   <option value="Married Joint">Married Filing Jointly</option>
   <option value="Married Separate">Married Filing Separately</option>
 </select>
-<label>Qualifying Children (for Child Tax Credit):</label>
+<label>Qualifying Children (under 17 for Child Tax Credit):</label>
 <input type="number" id="children" value="0">
 
 <h3>1099 Only:</h3>
@@ -87,7 +87,7 @@ function calcTax(income, children = 0) {
   else if (income <= 47150) tax = 1160 + (income - 11600) * 0.12;
   else if (income <= 100525) tax = 5426 + (income - 47150) * 0.22;
   else tax = 15513 + (income - 100525) * 0.24;
-  return Math.max(0, tax - Math.min(tax, children * 2000));
+  return Math.max(0, tax - Math.min(tax, children * 2000)); // CTC limit per child
 }
 
 function toggleRow(row) {
@@ -197,7 +197,7 @@ function renderTable() {
 }
 </script>
 
-<div class="info">
+<div class="info" style="border-left: 4px solid #ccc; border-image: linear-gradient(to bottom, #ccc 0%, #ccc 60%, transparent 60%, transparent 100%) 1;">
   <strong>Table Definitions:</strong><br>
   W-2 Tax: Estimated federal, state, and FICA taxes for W-2 employees<br>
   W-2 Net: Net pay after taxes for W-2 employees<br>
@@ -205,13 +205,10 @@ function renderTable() {
   Adj Income: Adjusted gross income for 1099 after deductions (mileage + business expenses)<br>
   COL Adj: Net income adjusted for cost-of-living index (COL)<br>
   Better: Higher COL-adjusted net income between W-2 and 1099
+  <hr>
+  <strong>Cost of Living Sources:</strong><br>
+  • <a href="https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area" target="_blank">U.S. Bureau of Economic Analysis (BEA)</a><br>
+  • <a href="https://livingwage.mit.edu/" target="_blank">MIT Living Wage Calculator</a><br>
+  • <a href="https://www.numbeo.com/cost-of-living/" target="_blank">Numbeo Cost of Living Index</a><br>
+  <strong>Child Tax Credit:</strong> Assumes $2,000 per qualifying child under age 17.
 </div>
-
-<div class="footer">
-  You may share, copy, or adapt this calculator freely for personal or educational use.<br>
-  Please credit the original author where possible. Respect the work — don’t remove attribution.<br>
-  &copy; 2025 Dinh Han, CodeCrafter. All rights reserved.
-</div>
-
-</body>
-</html>
