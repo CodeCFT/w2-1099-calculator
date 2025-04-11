@@ -1,41 +1,46 @@
-# W-2 vs 1099 Net Pay Calculator
+W-2 vs 1099 Net Pay Calculator
+This interactive calculator helps you compare W-2 employee and 1099 independent contractor income across all 50 U.S. states — with state-specific taxes, cost of living, housing, and investment forecast.
 
-This interactive calculator helps compare W-2 employee and 1099 independent contractor income across all U.S. states.
+💼 Key Features
+Federal tax brackets with Child Tax Credit (CTC)
 
-💼 **Key Features**:
-- Federal tax brackets with Child Tax Credit (CTC)
-- Mileage and business expense deductions for 1099 workers
-- Cost of Living (COL) adjustments by state
-- Hourly and annual net income comparison
-- Clear "Better" recommendation based on COL-adjusted net income
+Business deductions + mileage write-offs for 1099 contractors
 
-📊 **Displayed Table Columns**:
-- **State**  
-- **C.O.L.**: Cost of Living index  
-- **W-2 Tax**: Estimated federal + FICA taxes  
-- **W-2 Net**: Net income after taxes  
-- **W-2/hr**: Hourly W-2 net  
-- **1099 Tax**: Estimated self-employment taxes (after deductions)  
-- **Adj Income**: Adjusted 1099 gross after deductions  
-- **1099 Net**: 1099 net income after taxes  
-- **1099/hr**: Hourly 1099 net  
-- **W-2 COL Adj / 1099 COL Adj**: COL-adjusted net income  
-- **Better**: Highlights the more favorable option
+Cost of Living (COL) adjustments for all 50 states
 
-🔧 **How to Use**:
-1. Clone or download this repository.
-2. Open `index.html` in any modern browser.
-3. Optionally host it using GitHub Pages to share publicly.
+State-based rent and homeownership cost estimates
 
-🌐 **Live Version** (if published via GitHub Pages):  
-[https://yourusername.github.io/w2-1099-calculator](https://yourusername.github.io/w2-1099-calculator)
+Compare renting vs owning a 2-family home
 
----
+Forecast years to reach $1M savings @ 4% APY
 
-📄 **License and Attribution**
+Sortable table with expandable COL & housing breakdown
 
-You may share, copy, or adapt this calculator freely for personal or educational use.  
-Please credit the original author where possible.  
-Respect the work — don't remove attribution.
+Highlights which path offers higher COL-adjusted net income
 
-**© 2025 Dinh Han, CodeCrafter. All rights reserved.**
+📊 Displayed Table Columns
+Column	Description
+Type	W-2 or 1099
+State	U.S. state
+Tax	Estimated federal, state, and FICA/self-employment tax
+Net	Net income after all taxes
+$/hr	Net income divided by total hours
+COL Adj (Rent)	Net income minus annual rent
+COL Adj (Own)	Net income minus 2-family ownership cost (after rent offset)
+Years to $1M	Number of years to reach $1 million saved (at 4% annual interest)
+Better	Highlights which option (W-2 or 1099) provides higher COL-adjusted income
+🔧 How to Use
+Clone or download this repository.
+
+Open index.html in any modern browser.
+
+🌐 Live Version
+https://codecft.github.io/w2-1099-calculator/
+
+📄 License & Attribution
+You may share, copy, or adapt this calculator freely for personal or educational use.
+Please credit the original author where possible.
+Respect the work — don’t remove attribution.
+
+© 2025 Dinh Han, CodeCrafter. All rights reserved.
+
