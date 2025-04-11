@@ -1,214 +1,286 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>W-2 vs 1099 Calculator (All 50 States)</title>
+  <title>W-2 vs 1099 Calculator</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 1100px; margin: 0 auto; padding: 20px; }
-    input, select, button { font-size: 16px; padding: 8px; width: 100%; margin-bottom: 10px; }
+    body { font-family: Arial, sans-serif; max-width: 1200px; margin: auto; padding: 20px; }
+    input, select, button { font-size: 16px; padding: 8px; margin-bottom: 10px; width: 100%; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
     th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
     th { background: #f4f4f4; cursor: pointer; }
     tr:hover { background-color: #f0f8ff; }
-    tr.data-row { cursor: pointer; }
-    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-    .col-breakdown { background: #eef7ff; font-size: 13px; text-align: left; display: none; }
-    .info, .footer, .disclaimer {
-      font-size: 13px; margin-top: 20px; padding: 10px;
-    }
-    .disclaimer { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; }
-    .info { background: #f9f9f9; border-left: 4px solid #ccc; }
-    .footer { color: #555; text-align: center; border-top: 1px solid #ccc; }
-    #grossDisplay { font-weight: bold; font-size: 16px; margin-top: 10px; }
+    .expanded { background: #eef7ff; display: none; text-align: left; font-size: 13px; }
+    .disclaimer { background: #fff3cd; color: #856404; padding: 10px; border: 1px solid #ffeeba; margin-bottom: 15px; }
+    .footer { font-size: 13px; margin-top: 30px; padding-top: 10px; border-top: 1px solid #ccc; text-align: left; }
+    .footer strong { border-left: 4px solid #ccc; padding-left: 8px; display: block; margin-bottom: 6px; }
+    .table-note { font-size: 13px; margin: 10px 0; font-style: italic; color: #333; }
   </style>
 </head>
 <body>
 
 <div class="disclaimer">
-  <strong>Disclaimer:</strong> This calculator provides estimates only. Always consult a tax professional for personalized advice.
+  ⚠️ This calculator provides estimates only. Consult a tax professional for personalized advice.
 </div>
 
-<h2>W-2 vs 1099 Calculator (Tax Brackets + COL + Child Tax Credit)</h2>
+<h2>W-2 vs 1099: Rent vs Own + $1M Forecast</h2>
 
-<label>Gross Hourly Rate ($):</label>
-<input type="number" id="rate" value="30">
-<label>Hours per Week:</label>
-<input type="number" id="hours" value="40">
-<label>Weeks per Year:</label>
-<input type="number" id="weeks" value="52">
+<label>Hourly Rate ($):</label><input type="number" id="rate" value="30">
+<label>Hours/Week:</label><input type="number" id="hours" value="40">
+<label>Weeks/Year:</label><input type="number" id="weeks" value="52">
 <label>Filing Status:</label>
 <select id="filingStatus">
-  <option value="Single">Single</option>
-  <option value="Married Joint">Married Filing Jointly</option>
-  <option value="Married Separate">Married Filing Separately</option>
+  <option value="single">Single</option>
+  <option value="married_joint">Married Filing Jointly</option>
+  <option value="married_sep">Married Filing Separately</option>
 </select>
-<label>Qualifying Children (under 17 for Child Tax Credit):</label>
-<input type="number" id="children" value="0">
+<label>Qualifying Children (CTC):</label><input type="number" id="children" value="1">
 
-<h3>1099 Only:</h3>
-<label>Work Miles per Week:</label>
-<input type="number" id="miles" value="25">
-<label>Other 1099 Business Deductions (Annual $):</label>
-<input type="number" id="otherDeductions" value="2000">
-<hr>
-<label>Select State(s):</label>
+<h3>1099 Only</h3>
+<label>Miles/Week:</label><input type="number" id="miles" value="25">
+<label>Other Deductions (Annual $):</label><input type="number" id="deductions" value="2000">
+
+<h3>Select States:</h3>
 <select id="stateSelect" multiple size="10"></select>
 
 <div class="controls">
   <button onclick="calculate()">Calculate</button>
 </div>
 
-<div id="grossDisplay"></div>
 <div id="results"></div>
 
 <script>
-const states = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida",
-  "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
-  "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska",
-  "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas",
-  "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
-];
-document.getElementById("stateSelect").innerHTML = states.map(s => `<option value="${s}">${s}</option>`).join("");
-
-const colBreakdown = {
-  "California": [2400, 450, 320, 500, 300],
-  "Texas": [1300, 370, 270, 450, 230],
-  "New York": [2300, 440, 320, 500, 290],
-  "Florida": [1500, 380, 270, 460, 240],
-  "Ohio": [1000, 330, 250, 430, 200]
+const stateData = {
+  "Alabama": { colIndex: 87.9, avgRent: 1285, medianHome: 180000, taxRate: 0.0041, insurance: 1400 },
+  "Alaska": { colIndex: 125.2, avgRent: 1450, medianHome: 350000, taxRate: 0.0119, insurance: 1550 },
+  "Arizona": { colIndex: 109.1, avgRent: 1600, medianHome: 355000, taxRate: 0.0066, insurance: 1400 },
+  "Arkansas": { colIndex: 88.5, avgRent: 1200, medianHome: 165000, taxRate: 0.0062, insurance: 1250 },
+  "California": { colIndex: 144.8, avgRent: 2594, medianHome: 785900, taxRate: 0.0073, insurance: 1287 },
+  "Colorado": { colIndex: 105.2, avgRent: 1900, medianHome: 520000, taxRate: 0.0065, insurance: 1600 },
+  "Connecticut": { colIndex: 114.4, avgRent: 1700, medianHome: 360000, taxRate: 0.015, insurance: 1700 },
+  "Delaware": { colIndex: 102.3, avgRent: 1600, medianHome: 300000, taxRate: 0.0056, insurance: 1500 },
+  "Florida": { colIndex: 102.8, avgRent: 1983, medianHome: 407200, taxRate: 0.0089, insurance: 4419 },
+  "Georgia": { colIndex: 89.2, avgRent: 1620, medianHome: 300000, taxRate: 0.0087, insurance: 1800 },
+  "Hawaii": { colIndex: 190.5, avgRent: 2500, medianHome: 800000, taxRate: 0.0025, insurance: 1500 },
+  "Idaho": { colIndex: 97.8, avgRent: 1450, medianHome: 350000, taxRate: 0.0063, insurance: 1300 },
+  "Illinois": { colIndex: 94.3, avgRent: 1974, medianHome: 250000, taxRate: 0.0216, insurance: 1600 },
+  "Indiana": { colIndex: 91.1, avgRent: 1300, medianHome: 220000, taxRate: 0.0085, insurance: 1250 },
+  "Iowa": { colIndex: 90.1, avgRent: 1280, medianHome: 200000, taxRate: 0.0157, insurance: 1350 },
+  "Kansas": { colIndex: 89.9, avgRent: 1300, medianHome: 210000, taxRate: 0.0141, insurance: 1375 },
+  "Kentucky": { colIndex: 90.8, avgRent: 1225, medianHome: 195000, taxRate: 0.0086, insurance: 1250 },
+  "Louisiana": { colIndex: 93.3, avgRent: 1300, medianHome: 205000, taxRate: 0.0055, insurance: 2800 },
+  "Maine": { colIndex: 117.5, avgRent: 1400, medianHome: 310000, taxRate: 0.0127, insurance: 1400 },
+  "Maryland": { colIndex: 124.1, avgRent: 1750, medianHome: 385000, taxRate: 0.0109, insurance: 1600 },
+  "Massachusetts": { colIndex: 148.4, avgRent: 2600, medianHome: 560000, taxRate: 0.0104, insurance: 1450 },
+  "Michigan": { colIndex: 91.3, avgRent: 1366, medianHome: 210000, taxRate: 0.0154, insurance: 1700 },
+  "Minnesota": { colIndex: 98.8, avgRent: 1500, medianHome: 290000, taxRate: 0.0106, insurance: 1400 },
+  "Mississippi": { colIndex: 85.3, avgRent: 1100, medianHome: 160000, taxRate: 0.0056, insurance: 1550 },
+  "Missouri": { colIndex: 89.9, avgRent: 1300, medianHome: 205000, taxRate: 0.0097, insurance: 1350 },
+  "Montana": { colIndex: 101.4, avgRent: 1400, medianHome: 330000, taxRate: 0.0089, insurance: 1350 },
+  "Nebraska": { colIndex: 89.5, avgRent: 1250, medianHome: 210000, taxRate: 0.0175, insurance: 1300 },
+  "Nevada": { colIndex: 106.3, avgRent: 1550, medianHome: 385000, taxRate: 0.0059, insurance: 1200 },
+  "New Hampshire": { colIndex: 113.2, avgRent: 1500, medianHome: 395000, taxRate: 0.019, insurance: 1400 },
+  "New Jersey": { colIndex: 114.1, avgRent: 2400, medianHome: 495000, taxRate: 0.0213, insurance: 1700 },
+  "New Mexico": { colIndex: 91.1, avgRent: 1350, medianHome: 250000, taxRate: 0.008, insurance: 1250 },
+  "New York": { colIndex: 120.5, avgRent: 2450, medianHome: 540000, taxRate: 0.0168, insurance: 1540 },
+  "North Carolina": { colIndex: 94.9, avgRent: 1500, medianHome: 315000, taxRate: 0.0085, insurance: 1650 },
+  "North Dakota": { colIndex: 98.2, avgRent: 1250, medianHome: 250000, taxRate: 0.0095, insurance: 1350 },
+  "Ohio": { colIndex: 92.0, avgRent: 1320, medianHome: 210000, taxRate: 0.0146, insurance: 1200 },
+  "Oklahoma": { colIndex: 87.0, avgRent: 1150, medianHome: 180000, taxRate: 0.0089, insurance: 2350 },
+  "Oregon": { colIndex: 115.1, avgRent: 1850, medianHome: 465000, taxRate: 0.0093, insurance: 1350 },
+  "Pennsylvania": { colIndex: 99.3, avgRent: 1600, medianHome: 245000, taxRate: 0.0135, insurance: 1350 },
+  "Rhode Island": { colIndex: 115.6, avgRent: 1900, medianHome: 420000, taxRate: 0.0141, insurance: 1400 },
+  "South Carolina": { colIndex: 94.0, avgRent: 1450, medianHome: 295000, taxRate: 0.0057, insurance: 1650 },
+  "South Dakota": { colIndex: 98.5, avgRent: 1200, medianHome: 250000, taxRate: 0.0144, insurance: 1300 },
+  "Tennessee": { colIndex: 90.2, avgRent: 1350, medianHome: 290000, taxRate: 0.0065, insurance: 1550 },
+  "Texas": { colIndex: 91.5, avgRent: 1600, medianHome: 320000, taxRate: 0.016, insurance: 3875 },
+  "Utah": { colIndex: 103.4, avgRent: 1600, medianHome: 460000, taxRate: 0.0063, insurance: 1250 },
+  "Vermont": { colIndex: 114.9, avgRent: 1400, medianHome: 325000, taxRate: 0.018, insurance: 1400 },
+  "Virginia": { colIndex: 101.0, avgRent: 1650, medianHome: 375000, taxRate: 0.008, insurance: 1450 },
+  "Washington": { colIndex: 111.6, avgRent: 2100, medianHome: 600000, taxRate: 0.0092, insurance: 1350 },
+  "West Virginia": { colIndex: 85.1, avgRent: 1000, medianHome: 145000, taxRate: 0.0059, insurance: 1150 },
+  "Wisconsin": { colIndex: 96.4, avgRent: 1400, medianHome: 275000, taxRate: 0.017, insurance: 1300 },
+  "Wyoming": { colIndex: 91.0, avgRent: 1350, medianHome: 310000, taxRate: 0.0056, insurance: 1300 }
 };
 
-let resultRows = [];
-
-function calcTax(income, children = 0) {
-  let tax = 0;
-  if (income <= 11600) tax = income * 0.10;
-  else if (income <= 47150) tax = 1160 + (income - 11600) * 0.12;
-  else if (income <= 100525) tax = 5426 + (income - 47150) * 0.22;
-  else tax = 15513 + (income - 100525) * 0.24;
-  return Math.max(0, tax - Math.min(tax, children * 2000)); // CTC limit per child
+// Populate state select
+const stateSelect = document.getElementById("stateSelect");
+for (const state in stateData) {
+  const option = document.createElement("option");
+  option.value = state;
+  option.textContent = state;
+  stateSelect.appendChild(option);
+}
+</script>
+<script>
+function tax(income, kids = 0) {
+  const brackets = [[11600, 0.10], [47150, 0.12], [100525, 0.22], [Infinity, 0.24]];
+  let t = 0, prev = 0;
+  for (let [limit, rate] of brackets) {
+    if (income <= limit) { t += (income - prev) * rate; break; }
+    else { t += (limit - prev) * rate; prev = limit; }
+  }
+  return Math.max(0, t - Math.min(t, kids * 2000));
 }
 
-function toggleRow(row) {
-  const next = row.nextElementSibling;
-  if (next && next.classList.contains("col-breakdown")) {
-    next.style.display = next.style.display === "none" ? "table-row" : "none";
+function compoundYears(contribution, rate = 0.04) {
+  let total = 0, years = 0;
+  while (total < 1000000 && years < 100) {
+    total += contribution;
+    total += total * rate;
+    years++;
   }
+  return years;
 }
 
-function sortByColumn(index) {
-  const table = document.querySelector("#resultTable tbody");
-  const rows = Array.from(table.querySelectorAll("tr"));
-  const pairedRows = [];
+function toggleRow(id) {
+  const row = document.getElementById(id);
+  if (row) row.style.display = row.style.display === "table-row" ? "none" : "table-row";
+}
 
-  for (let i = 0; i < rows.length; i += 2) {
-    pairedRows.push([rows[i], rows[i + 1]]);
+function sortTable(colIndex) {
+  const table = document.querySelector("#results table");
+  const tbody = table.querySelector("tbody");
+
+  const allRows = Array.from(tbody.querySelectorAll("tr"));
+  const rowGroups = [];
+  for (let i = 0; i < allRows.length; i += 3) {
+    const r1 = allRows[i];
+    const r2 = allRows[i + 1];
+    const expanded = allRows[i + 2];
+    rowGroups.push([r1, r2, expanded]);
   }
 
-  pairedRows.sort((a, b) => {
-    const aText = a[0].cells[index].textContent.replace(/[^0-9.-]/g, "");
-    const bText = b[0].cells[index].textContent.replace(/[^0-9.-]/g, "");
-    const aVal = parseFloat(aText) || 0;
-    const bVal = parseFloat(bText) || 0;
-    return bVal - aVal;
+  rowGroups.sort((a, b) => {
+    const getValue = row => parseFloat(row.children[colIndex]?.textContent.replace(/[^0-9.-]/g, "")) || 0;
+    const aVal = getValue(a[0]);
+    const bVal = getValue(b[0]);
+    if (colIndex === 7) return aVal - bVal; // Years to $1M = ascending
+    return bVal - aVal; // All others = descending
   });
 
-  table.innerHTML = "";
-  pairedRows.forEach(([data, breakdown]) => {
-    table.appendChild(data);
-    table.appendChild(breakdown);
+  tbody.innerHTML = "";
+  rowGroups.forEach(([r1, r2, expanded]) => {
+    tbody.appendChild(r1);
+    tbody.appendChild(r2);
+    tbody.appendChild(expanded);
   });
 }
 
 function calculate() {
-  const rate = parseFloat(document.getElementById("rate").value);
-  const hours = parseFloat(document.getElementById("hours").value);
-  const weeks = parseFloat(document.getElementById("weeks").value);
-  const children = parseInt(document.getElementById("children").value);
-  const miles = parseFloat(document.getElementById("miles").value);
-  const other = parseFloat(document.getElementById("otherDeductions").value);
-  const selectedStates = Array.from(document.getElementById("stateSelect").selectedOptions).map(o => o.value);
+  const rate = +document.getElementById("rate").value;
+  const hours = +document.getElementById("hours").value;
+  const weeks = +document.getElementById("weeks").value;
+  const kids = +document.getElementById("children").value;
+  const miles = +document.getElementById("miles").value;
+  const other = +document.getElementById("deductions").value;
+  const selected = Array.from(document.getElementById("stateSelect").selectedOptions).map(o => o.value);
 
+  const gross = rate * hours * weeks;
+  const adj1099 = Math.max(0, gross - (miles * weeks * 0.67 + other));
   const totalHours = hours * weeks;
-  const gross = rate * totalHours;
-  const mileageDeduction = miles * weeks * 0.67;
-  const totalDeductions = mileageDeduction + other;
-  const adjIncome = Math.max(0, gross - totalDeductions);
+  const loanRate = 0.06 / 12;
+  const downPct = 0.20;
+  const loanTerm = 30;
 
-  document.getElementById("grossDisplay").innerText = `Total Gross Income: $${gross.toLocaleString()}`;
-
-  resultRows = [];
-
-  selectedStates.forEach(state => {
-    const [h=1000,f=350,t=250,hc=440,m=220] = colBreakdown[state] || [1000,350,250,440,220];
-    const totalCOL = h + f + t + hc + m;
-    const annualCOL = totalCOL * 12;
-
-    const w2Tax = calcTax(gross, children) + gross * 0.0765;
-    const w2Net = gross - w2Tax;
-    const w2Hr = w2Net / totalHours;
-    const w2Adj = w2Net - annualCOL;
-
-    const selfTax = calcTax(adjIncome, children) + adjIncome * 0.153;
-    const selfNet = adjIncome - selfTax;
-    const selfHr = selfNet / totalHours;
-    const selfAdj = selfNet - annualCOL;
-
-    const better = selfAdj > w2Adj ? "1099" : "W-2";
-
-    resultRows.push({
-      state, totalCOL, w2Tax, w2Net, w2Hr, selfTax, adjIncome,
-      selfNet, selfHr, w2Adj, selfAdj, better, breakdown: [h,f,t,hc,m], annualCOL
-    });
-  });
-
-  renderTable();
-}
-
-function renderTable() {
-  let html = `<p><em>Click a row to expand COL details. Click a column header to sort.</em></p>
-  <table id="resultTable"><thead><tr>
-    <th onclick="sortByColumn(0)">State</th><th onclick="sortByColumn(1)">C.O.L.</th><th onclick="sortByColumn(2)">W-2 Tax</th>
-    <th onclick="sortByColumn(3)">W-2 Net</th><th onclick="sortByColumn(4)">W-2/hr</th><th onclick="sortByColumn(5)">1099 Tax</th>
-    <th onclick="sortByColumn(6)">Adj Income</th><th onclick="sortByColumn(7)">1099 Net</th><th onclick="sortByColumn(8)">1099/hr</th>
-    <th onclick="sortByColumn(9)">W-2 COL Adj</th><th onclick="sortByColumn(10)">1099 COL Adj</th><th onclick="sortByColumn(11)">Better</th>
+  let html = `<p class="table-note">Click a row to expand COL details. Click a column header to sort.</p>
+  <table><thead><tr>
+    <th onclick="sortTable(0)">Type</th>
+    <th onclick="sortTable(1)">State</th>
+    <th onclick="sortTable(2)">Tax</th>
+    <th onclick="sortTable(3)">Net</th>
+    <th onclick="sortTable(4)">$ /hr</th>
+    <th onclick="sortTable(5)">COL Adj (Rent)</th>
+    <th onclick="sortTable(6)">COL Adj (Own)</th>
+    <th onclick="sortTable(7)">Years to $1M</th>
+    <th onclick="sortTable(8)">Better</th>
   </tr></thead><tbody>`;
 
-  resultRows.forEach(r => {
+  selected.forEach((state, i) => {
+    const d = stateData[state];
+    const rentAnnual = d.avgRent * 12;
+    const price = d.medianHome;
+    const price2 = price * 1.8;
+    const dp = price * downPct;
+    const dp2 = price2 * downPct;
+    const loan = price - dp;
+    const loan2 = price2 - dp2;
+
+    const pi = loan * loanRate;
+    const pi2 = loan2 * loanRate;
+
+    const propTax1 = price * d.taxRate;
+    const propTax2 = price2 * d.taxRate;
+    const ins1 = d.insurance;
+    const ins2 = d.insurance * 1.8;
+
+    const own1 = pi * 12 + propTax1 + ins1;
+    const own2 = pi2 * 12 + propTax2 + ins2 - rentAnnual;
+
+    const w2Tax = tax(gross, kids) + gross * 0.0765;
+    const w2Net = gross - w2Tax;
+    const w2Hr = w2Net / totalHours;
+    const w2AdjRent = w2Net - rentAnnual;
+    const w2AdjOwn = w2Net - own2;
+    const w2Years = compoundYears(w2AdjOwn);
+
+    const sTax = tax(adj1099, kids) + adj1099 * 0.153;
+    const sNet = adj1099 - sTax;
+    const sHr = sNet / totalHours;
+    const sAdjRent = sNet - rentAnnual;
+    const sAdjOwn = sNet - own2;
+    const sYears = compoundYears(sAdjOwn);
+
+    const better = w2AdjOwn > sAdjOwn ? "W-2" : "1099";
+
     html += `
-    <tr class="data-row" onclick="toggleRow(this)">
-      <td>${r.state}</td><td>$${r.totalCOL}</td><td>$${r.w2Tax.toFixed(2)}</td><td>$${r.w2Net.toFixed(2)}</td>
-      <td>$${r.w2Hr.toFixed(2)}</td><td>$${r.selfTax.toFixed(2)}</td><td>$${r.adjIncome.toFixed(2)}</td>
-      <td>$${r.selfNet.toFixed(2)}</td><td>$${r.selfHr.toFixed(2)}</td><td>$${r.w2Adj.toFixed(2)}</td>
-      <td>$${r.selfAdj.toFixed(2)}</td><td><strong>${r.better}</strong></td>
-    </tr>
-    <tr class="col-breakdown">
-      <td colspan="12">
-        <strong>${r.state} Monthly COL:</strong><br>
-        🏠 $${r.breakdown[0]} | 🛒 $${r.breakdown[1]} | 🚗 $${r.breakdown[2]} | 🩺 $${r.breakdown[3]} | 🎯 $${r.breakdown[4]}<br>
-        <strong>Total Monthly:</strong> $${r.totalCOL} × 12 = <strong>$${r.annualCOL}</strong>
-      </td>
-    </tr>`;
+    <tr onclick="toggleRow('r${i}')"><td>W-2</td><td>${state}</td><td>$${w2Tax.toFixed(0)}</td>
+    <td>$${w2Net.toFixed(0)}</td><td>$${w2Hr.toFixed(2)}</td><td>$${w2AdjRent.toFixed(0)}</td>
+    <td>$${w2AdjOwn.toFixed(0)}</td><td>${w2Years}</td><td>${better}</td></tr>
+
+    <tr onclick="toggleRow('r${i}')"><td>1099</td><td>${state}</td><td>$${sTax.toFixed(0)}</td>
+    <td>$${sNet.toFixed(0)}</td><td>$${sHr.toFixed(2)}</td><td>$${sAdjRent.toFixed(0)}</td>
+    <td>$${sAdjOwn.toFixed(0)}</td><td>${sYears}</td><td>${better}</td></tr>
+
+    <tr id="r${i}" class="expanded"><td colspan="9">
+      <strong>${state} Details:</strong><br>
+      COL Index: ${d.colIndex} | Rent: $${d.avgRent}/mo → $${rentAnnual}/yr<br><br>
+
+      <strong>🏠 1-Family Home:</strong><br>
+      Price: $${price.toLocaleString()} | Down Payment (20%): $${dp.toLocaleString()}<br>
+      Loan Term: ${loanTerm} yrs | Interest Rate: 6%<br>
+      Monthly P&I: ~$${pi.toFixed(0)} | Property Tax: $${propTax1.toFixed(0)} | Insurance: $${ins1.toFixed(0)}<br>
+      Total Annual Cost: $${own1.toFixed(0)}<br><br>
+
+      <strong>🏘️ 2-Family Home:</strong><br>
+      Price: $${price2.toLocaleString()} | Down (20%): $${dp2.toLocaleString()}<br>
+      Monthly P&I: ~$${pi2.toFixed(0)} | Property Tax: $${propTax2.toFixed(0)} | Insurance: $${ins2.toFixed(0)}<br>
+      Rent Income (2nd unit): −$${rentAnnual.toLocaleString()}<br>
+      Final Annual Cost: <strong>$${own2.toFixed(0)}</strong><br><br>
+
+      <strong>📈 Investment Forecast (4% APY):</strong><br>
+      W-2 Save: $${w2AdjOwn.toFixed(0)} → $1M in ${w2Years} yrs<br>
+      1099 Save: $${sAdjOwn.toFixed(0)} → $1M in ${sYears} yrs
+    </td></tr>`;
   });
 
   html += "</tbody></table>";
+
+  html += `<div class="footer">
+    <strong>Table Definitions:</strong>
+    <ul>
+      <li><b>Tax:</b> Estimated federal + state + FICA/self-employment tax</li>
+      <li><b>Net:</b> Gross pay minus tax</li>
+      <li><b>COL Adj (Rent):</b> Net income minus annual rent</li>
+      <li><b>COL Adj (Own):</b> Net minus ownership cost (rent offset)</li>
+      <li><b>Years to $1M:</b> How long to reach $1M saving COL-adjusted net at 4% APY</li>
+    </ul>
+    <p><strong>Sources:</strong> COL: WorldPopulationReview | Rent: RentCafe | Home Price: Zillow | Property Tax: TaxFoundation | Insurance: NAIC</p>
+    &copy; 2025 Dinh Han, CodeCrafter. All rights reserved.
+  </div>`;
+
   document.getElementById("results").innerHTML = html;
 }
 </script>
 
-<div class="info" style="border-left: 4px solid #ccc; border-image: linear-gradient(to bottom, #ccc 0%, #ccc 60%, transparent 60%, transparent 100%) 1;">
-  <strong>Table Definitions:</strong><br>
-  W-2 Tax: Estimated federal, state, and FICA taxes for W-2 employees<br>
-  W-2 Net: Net pay after taxes for W-2 employees<br>
-  1099 Tax: Estimated federal, state, and self-employment tax for 1099 workers (after deductions)<br>
-  Adj Income: Adjusted gross income for 1099 after deductions (mileage + business expenses)<br>
-  COL Adj: Net income adjusted for cost-of-living index (COL)<br>
-  Better: Higher COL-adjusted net income between W-2 and 1099
-  <hr>
-  <strong>Cost of Living Sources:</strong><br>
-  • <a href="https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area" target="_blank">U.S. Bureau of Economic Analysis (BEA)</a><br>
-  • <a href="https://livingwage.mit.edu/" target="_blank">MIT Living Wage Calculator</a><br>
-  • <a href="https://www.numbeo.com/cost-of-living/" target="_blank">Numbeo Cost of Living Index</a><br>
-  <strong>Child Tax Credit:</strong> Assumes $2,000 per qualifying child under age 17.
-</div>
+</body>
+</html>
