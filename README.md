@@ -42,8 +42,7 @@ This interactive calculator helps you compare **W-2 employee** and **1099 indepe
 
 ## 🌐 Live Version
 
-[https://yourusername.github.io/w2-1099-calculator](https://yourusername.github.io/w2-1099-calculator)  
-*(Replace with your actual GitHub Pages URL)*
+https://codecft.github.io/w2-1099-calculator/
 
 ---
 
